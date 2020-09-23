@@ -107,6 +107,7 @@ if use_cuda:
 
 best_acc = 0  # best test accuracy
 
+
 def main():
     global best_acc
     start_epoch = args.start_epoch  # start from epoch 0 or last checkpoint epoch
@@ -220,6 +221,7 @@ def main():
     print('Best acc:')
     print(best_acc)
 
+
 def train(train_loader, model, criterion, optimizer, epoch, use_cuda):
     # switch to train mode
     model.train()
@@ -236,19 +238,15 @@ def train(train_loader, model, criterion, optimizer, epoch, use_cuda):
         # measure data loading time
         data_time.update(time.time() - end)
 
-        if use_cuda:
-            inputs, targets = inputs.cuda(), targets.cuda(async=True)
-        inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
-
         # compute output
         outputs = model(inputs)
         loss = criterion(outputs, targets)
 
         # measure accuracy and record loss
         prec1, prec5 = accuracy(outputs.data, targets.data, topk=(1, 5))
-        losses.update(loss.data[0], inputs.size(0))
-        top1.update(prec1[0], inputs.size(0))
-        top5.update(prec5[0], inputs.size(0))
+        losses.update(loss.item(), inputs.size(0))
+        top1.update(prec1.item(), inputs.size(0))
+        top5.update(prec5.item(), inputs.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -275,6 +273,7 @@ def train(train_loader, model, criterion, optimizer, epoch, use_cuda):
     bar.finish()
     return (losses.avg, top1.avg)
 
+
 def test(val_loader, model, criterion, epoch, use_cuda):
     global best_acc
 
@@ -293,19 +292,15 @@ def test(val_loader, model, criterion, epoch, use_cuda):
         # measure data loading time
         data_time.update(time.time() - end)
 
-        if use_cuda:
-            inputs, targets = inputs.cuda(), targets.cuda()
-        inputs, targets = torch.autograd.Variable(inputs, volatile=True), torch.autograd.Variable(targets)
-
         # compute output
         outputs = model(inputs)
         loss = criterion(outputs, targets)
 
         # measure accuracy and record loss
         prec1, prec5 = accuracy(outputs.data, targets.data, topk=(1, 5))
-        losses.update(loss.data[0], inputs.size(0))
-        top1.update(prec1[0], inputs.size(0))
-        top5.update(prec5[0], inputs.size(0))
+        losses.update(loss.item(), inputs.size(0))
+        top1.update(prec1.item(), inputs.size(0))
+        top5.update(prec5.item(), inputs.size(0))
 
         # measure elapsed time
         batch_time.update(time.time() - end)
@@ -327,11 +322,13 @@ def test(val_loader, model, criterion, epoch, use_cuda):
     bar.finish()
     return (losses.avg, top1.avg)
 
+
 def save_checkpoint(state, is_best, checkpoint='checkpoint', filename='checkpoint.pth.tar'):
     filepath = os.path.join(checkpoint, filename)
     torch.save(state, filepath)
     if is_best:
         shutil.copyfile(filepath, os.path.join(checkpoint, 'model_best.pth.tar'))
+
 
 def adjust_learning_rate(optimizer, epoch):
     global state
@@ -339,6 +336,7 @@ def adjust_learning_rate(optimizer, epoch):
         state['lr'] *= args.gamma
         for param_group in optimizer.param_groups:
             param_group['lr'] = state['lr']
+
 
 if __name__ == '__main__':
     main()
